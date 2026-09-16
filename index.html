@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HerdLens | Livestock disease assessment</title>
+  <style>
+    :root { --ink:#17231f; --muted:#66776e; --green:#1e6b52; --lime:#d9f36a; --paper:#f4f6ef; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; color:var(--ink); background:radial-gradient(circle at 90% 10%,#dff0bd,transparent 38%),linear-gradient(135deg,#edf3e9,#f7f3ea); font-family:Georgia,'Times New Roman',serif; }
+    main { width:min(760px,calc(100% - 32px)); padding:54px 0; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:700; font-size:20px; }
+    .mark { width:40px; height:40px; display:grid; place-items:center; color:#fff; background:var(--green); border-radius:14px 14px 14px 4px; font:18px Arial,sans-serif; }
+    section { margin-top:44px; padding:42px; border:1px solid #fff; border-radius:24px; background:rgba(255,253,248,.82); box-shadow:0 24px 70px rgba(37,59,48,.12); }
+    .eyebrow { color:var(--green); text-transform:uppercase; letter-spacing:.16em; font:700 12px Arial,sans-serif; }
+    h1 { margin:18px 0; font-size:clamp(44px,8vw,76px); line-height:.95; font-weight:500; letter-spacing:-.04em; }
+    p { max-width:570px; color:var(--muted); font:17px/1.6 Arial,sans-serif; }
+    a { display:inline-block; margin-top:20px; padding:14px 22px; border-radius:999px; color:#fff; background:var(--green); text-decoration:none; font:700 14px Arial,sans-serif; }
+    .note { margin-top:22px; font-size:13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand"><span class="mark">H</span><span>HerdLens</span></div>
+    <section>
+      <div class="eyebrow">Livestock health intelligence</div>
+      <h1>See the skin.<br>Know the risk.</h1>
+      <p>The GitHub Pages address hosts the project information. The AI upload service must run on a Python server because YOLOv8 and U-Net cannot execute from GitHub Pages.</p>
+      <a href="https://github.com/Yashasgs3/Lsd--lumpy-skin-disease-detection-">View project on GitHub</a>
+      <p class="note">Deploy the included <strong>render.yaml</strong> with Render to activate image upload, disease detection, segmentation masks, and severity results.</p>
+    </section>
+  </main>
+</body>
+</html>
