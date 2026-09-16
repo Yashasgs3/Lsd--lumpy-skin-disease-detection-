@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: livestock-disease-vision
+    runtime: python
+    rootDir: lsd-detection-segmentation-severity-main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 1 --threads 2 --timeout 180 app:app
+    plan: free
