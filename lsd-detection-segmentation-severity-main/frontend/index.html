@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HerdLens | Skin disease assessment</title>
+  <style>
+    :root { --ink:#17231f; --muted:#6c7c75; --paper:#f4f6ef; --panel:#fffdf8; --line:#dce5dc; --green:#1e6b52; --lime:#d9f36a; --coral:#f17c5b; --shadow:0 24px 70px rgba(37,59,48,.12); }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:radial-gradient(circle at 90% 8%, #e1f0c0 0 13%, transparent 36%), linear-gradient(135deg,#edf3e9 0%,#f7f3ea 50%,#e7efdf 100%); font-family: Georgia, 'Times New Roman', serif; min-height:100vh; }
+    button, input { font:inherit; }
+    .shell { width:min(1180px, calc(100% - 40px)); margin:auto; padding:28px 0 54px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:54px; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.03em; font-size:20px; }
+    .mark { width:40px; height:40px; display:grid; place-items:center; color:#fff; background:var(--green); border-radius:14px 14px 14px 4px; font-family:Arial,sans-serif; font-size:18px; }
+    .status { display:flex; align-items:center; gap:8px; color:var(--muted); font:13px Arial,sans-serif; }
+    .status i { width:8px; height:8px; border-radius:50%; background:#69a94c; box-shadow:0 0 0 5px #dff0ce; }
+    .hero { display:grid; grid-template-columns:1.02fr .98fr; gap:70px; align-items:center; margin-bottom:42px; }
+    .eyebrow { color:var(--green); text-transform:uppercase; letter-spacing:.18em; font:700 12px Arial,sans-serif; }
+    h1 { font-size:clamp(46px,6.7vw,84px); line-height:.94; letter-spacing:-.045em; font-weight:500; margin:18px 0 24px; max-width:650px; }
+    .intro { color:#53655c; font:18px/1.55 Arial,sans-serif; max-width:520px; margin:0; }
+    .hero-note { margin-top:28px; display:flex; gap:12px; align-items:center; color:var(--muted); font:13px Arial,sans-serif; }
+    .hero-note strong { color:var(--ink); font-weight:700; }
+    .upload-card { background:rgba(255,253,248,.9); border:1px solid rgba(255,255,255,.8); border-radius:22px; padding:10px; box-shadow:var(--shadow); transform:rotate(1.3deg); }
+    .upload-inner { border:1.5px dashed #aebfb1; border-radius:16px; padding:36px 30px 30px; text-align:center; transition:.2s ease; }
+    .upload-inner.drag { background:#f1f7df; border-color:var(--green); }
+    .upload-icon { width:64px; height:64px; display:grid; place-items:center; margin:0 auto 18px; border-radius:50%; background:var(--lime); color:var(--green); font:32px Arial,sans-serif; }
+    .upload-card h2 { font-size:28px; font-weight:500; margin:0 0 10px; }
+    .upload-card p { color:var(--muted); font:14px/1.5 Arial,sans-serif; margin:0 auto 24px; max-width:300px; }
+    .choose { border:0; border-radius:999px; background:var(--green); color:white; cursor:pointer; padding:13px 22px; font:700 14px Arial,sans-serif; }
+    .choose:hover { background:#15523f; }
+    #fileInput { display:none; }
+    .filename { color:var(--green); font:12px Arial,sans-serif; margin:18px 0 0; min-height:16px; overflow-wrap:anywhere; }
+    .workbench { display:none; background:var(--panel); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); overflow:hidden; animation:rise .45s ease both; }
+    .workbench.visible { display:block; }
+    .work-head { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:22px 26px; border-bottom:1px solid var(--line); }
+    .work-head h2 { margin:0; font-size:24px; font-weight:500; }
+    .work-head span { color:var(--muted); font:13px Arial,sans-serif; }
+    .run { border:0; border-radius:999px; padding:11px 18px; background:var(--coral); color:#fff; cursor:pointer; font:700 13px Arial,sans-serif; }
+    .run:disabled { opacity:.5; cursor:wait; }
+    .preview { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(270px,.75fr); gap:0; }
+    .image-stage { min-height:360px; display:grid; place-items:center; padding:24px; background:#17231f; }
+    .image-stage img { max-width:100%; max-height:520px; object-fit:contain; border-radius:8px; }
+    .metrics { padding:28px; background:#fffdf8; }
+    .metrics h3 { font-size:16px; color:var(--muted); text-transform:uppercase; letter-spacing:.12em; font-family:Arial,sans-serif; margin:0 0 22px; }
+    .metric { padding:17px 0; border-top:1px solid var(--line); }
+    .metric small { display:block; color:var(--muted); font:12px Arial,sans-serif; margin-bottom:6px; }
+    .metric strong { display:block; font-size:28px; font-weight:500; }
+    .metric strong.good { color:#47883d; }.metric strong.warn { color:#cc6c37; }.metric strong.bad { color:#bc493d; }
+    .bar { height:8px; margin-top:11px; overflow:hidden; border-radius:99px; background:#e7ede5; }.bar i { display:block; width:0; height:100%; border-radius:inherit; background:var(--coral); transition:width .5s ease; }
+    .error { display:none; margin:18px 26px 0; padding:13px 15px; border-radius:10px; background:#fff0ed; color:#a53e34; font:14px Arial,sans-serif; }.error.visible { display:block; }
+    .footer { display:flex; justify-content:space-between; gap:20px; margin-top:22px; color:var(--muted); font:12px Arial,sans-serif; }
+    @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+    @media (max-width:850px) { .hero { grid-template-columns:1fr; gap:32px; }.upload-card { transform:none; } .preview { grid-template-columns:1fr; } .image-stage { min-height:260px; } }
+    @media (max-width:560px) { .shell { width:min(100% - 24px,1180px); padding-top:18px; } header { margin-bottom:36px; }.status { display:none; } h1 { font-size:54px; }.work-head { align-items:flex-start; flex-direction:column; padding:20px; }.metrics { padding:22px; }.footer { flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header><div class="brand"><span class="mark">H</span><span>HerdLens</span></div><div class="status"><i></i> Inference system ready</div></header>
+    <section class="hero">
+      <div><div class="eyebrow">Livestock health intelligence</div><h1>See the skin.<br><em>Know the risk.</em></h1><p class="intro">Upload one clear cow image for a detection, disease-region mask, and severity estimate in a single report.</p><div class="hero-note"><strong>YOLOv8 + U-Net</strong><span>·</span><span>local processing</span></div></div>
+      <div class="upload-card"><div class="upload-inner" id="dropZone"><div class="upload-icon">↑</div><h2>Drop an image here</h2><p>JPG, PNG, JPEG, or WEBP. Best results come from one well-lit cow in frame.</p><button class="choose" id="chooseButton" type="button">Choose image</button><input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp"><div class="filename" id="filename">No image selected</div></div></div>
+    </section>
+    <section class="workbench" id="workbench">
+      <div class="work-head"><div><h2>Assessment report</h2><span id="reportStatus">Ready to analyze</span></div><button class="run" id="runButton" type="button">Analyze image</button></div>
+      <div class="error" id="errorBox"></div>
+      <div class="preview"><div class="image-stage"><img id="resultImage" alt="Analysis result"></div><aside class="metrics"><h3>Clinical readout</h3><div class="metric"><small>Detected condition</small><strong id="diagnosis">—</strong></div><div class="metric"><small>Model confidence</small><strong id="confidence">—</strong></div><div class="metric"><small>Disease area</small><strong id="severity">—</strong><div class="bar"><i id="severityBar"></i></div></div><div class="metric"><small>Severity level</small><strong id="level">—</strong></div></aside></div>
+    </section>
+    <div class="footer"><span>Results are saved automatically to <strong>livestock_pipeline/results</strong>.</span><span>For veterinary screening support only.</span></div>
+  </main>
+  <script>
+    const input = document.getElementById('fileInput');
+    const drop = document.getElementById('dropZone');
+    const choose = document.getElementById('chooseButton');
+    const workbench = document.getElementById('workbench');
+    const filename = document.getElementById('filename');
+    const run = document.getElementById('runButton');
+    const error = document.getElementById('errorBox');
+    const resultImage = document.getElementById('resultImage');
+    let selectedFile = null;
+    choose.addEventListener('click', () => input.click());
+    input.addEventListener('change', () => setFile(input.files[0]));
+    ['dragenter','dragover'].forEach(type => drop.addEventListener(type, e => { e.preventDefault(); drop.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(type => drop.addEventListener(type, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+    drop.addEventListener('drop', e => setFile(e.dataTransfer.files[0]));
+    function setFile(file) { if (!file || !file.type.startsWith('image/')) return showError('Please choose a supported image file.'); selectedFile = file; filename.textContent = file.name; workbench.classList.add('visible'); error.classList.remove('visible'); resultImage.src = URL.createObjectURL(file); document.getElementById('reportStatus').textContent = 'Image ready for analysis'; }
+    run.addEventListener('click', async () => { if (!selectedFile) return showError('Choose an image first.'); const form = new FormData(); form.append('image', selectedFile); run.disabled = true; run.textContent = 'Analyzing…'; error.classList.remove('visible'); document.getElementById('reportStatus').textContent = 'Running detection and segmentation'; try { const response = await fetch('/api/analyze', { method:'POST', body:form }); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Analysis failed.'); resultImage.src = data.result_url + '?t=' + Date.now(); document.getElementById('diagnosis').textContent = data.diagnosis; document.getElementById('confidence').textContent = data.confidence + '%'; document.getElementById('severity').textContent = data.severity.toFixed(2) + '%'; document.getElementById('level').textContent = data.severity_level; document.getElementById('severityBar').style.width = Math.min(data.severity, 100) + '%'; document.getElementById('reportStatus').textContent = 'Saved to results folder'; styleLevel(data.severity_level); } catch (e) { showError(e.message); document.getElementById('reportStatus').textContent = 'Analysis could not be completed'; } finally { run.disabled = false; run.textContent = 'Analyze image'; } });
+    function styleLevel(level) { const el = document.getElementById('level'); el.className = level === 'Healthy' ? 'good' : level === 'Severe' ? 'bad' : 'warn'; }
+    function showError(message) { error.textContent = message; error.classList.add('visible'); }
+  </script>
+</body>
+</html>
