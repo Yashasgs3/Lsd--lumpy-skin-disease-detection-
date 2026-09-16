@@ -236,6 +236,11 @@ def index():
     return render_template("index.html")
 
 
+@app.get("/health")
+def health():
+    return jsonify({"status": "ok", "device": str(DEVICE)})
+
+
 @app.post("/api/analyze")
 def analyze():
     uploaded = request.files.get("image")
