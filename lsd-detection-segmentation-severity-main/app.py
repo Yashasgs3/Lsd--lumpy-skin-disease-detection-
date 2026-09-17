@@ -87,32 +87,21 @@ def segment_crop(model, crop):
     return cv2.resize(mask, (crop.shape[1], crop.shape[0]), interpolation=cv2.INTER_NEAREST)
 
 
-def make_overlay(image, mask, box, severity, level, label, confidence):
+def make_overlay(image, mask, boxes, severity, level):
     overlay = image.copy()
-    x1, y1, x2, y2 = box
     if mask.any():
-        color_mask = np.zeros_like(overlay[y1:y2, x1:x2])
+        color_mask = np.zeros_like(overlay)
         color_mask[:, :, 2] = mask
-        overlay[y1:y2, x1:x2] = cv2.addWeighted(
-            overlay[y1:y2, x1:x2], 0.55, color_mask, 0.45, 0
-        )
+        overlay = cv2.addWeighted(overlay, 0.55, color_mask, 0.45, 0)
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
-            if cv2.contourArea(contour) < 40:
-                continue
-            cv2.drawContours(overlay[y1:y2, x1:x2], [contour], -1, (255, 90, 70), 2)
+            if cv2.contourArea(contour) >= 40:
+                cv2.drawContours(overlay, [contour], -1, (255, 90, 70), 2)
 
-    cv2.rectangle(overlay, (x1, y1), (x2, y2), (70, 230, 150), 3)
-    cv2.putText(
-        overlay,
-        f"{label}  {confidence:.0%}",
-        (x1, max(30, y1 - 12)),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.8,
-        (255, 255, 255),
-        2,
-        cv2.LINE_AA,
-    )
+    for box in boxes:
+        x1, y1, x2, y2, label, confidence = box
+        cv2.rectangle(overlay, (x1, y1), (x2, y2), (70, 230, 150), 3)
+        cv2.putText(overlay, f"{label} {confidence:.0%}", (x1, max(30, y1 - 12)), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(
         overlay,
         f"Severity: {severity:.2f}% ({level})",
@@ -160,49 +149,53 @@ def append_result(row):
 
 
 def analyze_image(image_path):
+    image_path = Path(image_path)
     detector, segmenter = load_models()
     image = cv2.imread(str(image_path))
     if image is None:
         raise ValueError("The uploaded file is not a readable image.")
 
-    results = detector(image, verbose=False)[0]
+    results = detector(image, conf=0.15, iou=0.5, max_det=30, verbose=False)[0]
     boxes = results.boxes
     if boxes is None or len(boxes) == 0:
         raise ValueError("No cow was detected. Upload a clear image showing one cow.")
 
     confidences = boxes.conf.detach().cpu().numpy()
     classes = boxes.cls.detach().cpu().numpy().astype(int)
-    top_index = int(np.argmax(confidences))
     height, width = image.shape[:2]
-    x1, y1, x2, y2 = boxes.xyxy[top_index].detach().cpu().numpy().astype(int)
-    x1, y1 = max(0, x1), max(0, y1)
-    x2, y2 = min(width, x2), min(height, y2)
-    if x2 <= x1 or y2 <= y1:
-        raise ValueError("The detected cow region is invalid. Try another image.")
-
     detection_view = image.copy()
+    full_mask = np.zeros((height, width), dtype=np.uint8)
+    detection_boxes = []
+    detections = []
     for box, confidence, class_id in zip(boxes.xyxy.detach().cpu().numpy(), confidences, classes):
         bx1, by1, bx2, by2 = box.astype(int)
+        bx1, by1 = max(0, bx1), max(0, by1)
+        bx2, by2 = min(width, bx2), min(height, by2)
+        if bx2 <= bx1 or by2 <= by1:
+            continue
         name = normalize_label(results.names[int(class_id)])
         cv2.rectangle(detection_view, (bx1, by1), (bx2, by2), (70, 110, 255), 3)
         cv2.putText(detection_view, f"{name} {confidence:.0%}", (bx1, max(28, by1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 255, 255), 2, cv2.LINE_AA)
+        crop = image[by1:by2, bx1:bx2]
+        crop_mask = np.zeros(crop.shape[:2], dtype=np.uint8) if name == "Healthy" else segment_crop(segmenter, crop)
+        full_mask[by1:by2, bx1:bx2] = np.maximum(full_mask[by1:by2, bx1:bx2], crop_mask)
+        detection_boxes.append((bx1, by1, bx2, by2, name, float(confidence)))
+        detections.append({"diagnosis": name, "confidence": round(float(confidence) * 100, 1)})
 
-    diagnosis = normalize_label(results.names[int(classes[top_index])])
-    confidence = float(confidences[top_index])
-    crop = image[y1:y2, x1:x2]
-    if diagnosis == "Healthy":
-        mask = np.zeros(crop.shape[:2], dtype=np.uint8)
-    else:
-        mask = segment_crop(segmenter, crop)
-
-    infected_pixels = int(np.count_nonzero(mask > 127))
-    severity = round((infected_pixels / max(1, mask.size)) * 100, 2)
+    if not detection_boxes:
+        raise ValueError("The detected cow regions are invalid. Try another image.")
+    primary = max(detection_boxes, key=lambda item: item[5])
+    diagnosis = primary[4]
+    confidence = primary[5]
+    cow_area = sum((box[2] - box[0]) * (box[3] - box[1]) for box in detection_boxes)
+    infected_pixels = int(np.count_nonzero(full_mask > 127))
+    severity = round((infected_pixels / max(1, cow_area)) * 100, 2)
     level = severity_level(severity)
-    if diagnosis == "Healthy":
+    if not any(item[4] != "Healthy" for item in detection_boxes):
         severity = 0.0
         level = "Healthy"
-    overlay = make_overlay(image, mask, (x1, y1, x2, y2), severity, level, diagnosis, confidence)
-    combined = create_combined(image, detection_view, mask, overlay)
+    overlay = make_overlay(image, full_mask, detection_boxes, severity, level)
+    combined = create_combined(image, detection_view, full_mask, overlay)
 
     token = uuid.uuid4().hex[:10]
     safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", secure_filename(image_path.name))
@@ -210,7 +203,7 @@ def analyze_image(image_path):
     result_name = f"result_{stem}_{token}.jpg"
     mask_name = f"mask_{stem}_{token}.png"
     cv2.imwrite(str(RESULTS_DIR / result_name), combined, [cv2.IMWRITE_JPEG_QUALITY, 92])
-    cv2.imwrite(str(RESULTS_DIR / mask_name), mask)
+    cv2.imwrite(str(RESULTS_DIR / mask_name), full_mask)
     append_result({
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "image": safe_name,
@@ -225,6 +218,8 @@ def analyze_image(image_path):
         "confidence": round(confidence * 100, 1),
         "severity": severity,
         "severity_level": level,
+        "detections": detections,
+        "detection_count": len(detections),
         "result_url": f"/results/{result_name}",
         "mask_url": f"/results/{mask_name}",
         "device": str(DEVICE),
