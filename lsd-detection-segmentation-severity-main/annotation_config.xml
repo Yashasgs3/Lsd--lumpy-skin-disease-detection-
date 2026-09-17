@@ -1,0 +1,13 @@
+<View>
+  <Header value="Label every cow and mark every visible disease region" />
+  <Image name="image" value="$image" zoom="true" rotateControl="true" />
+  <RectangleLabels name="cow" toName="image">
+    <Label value="Healthy" background="#42a85f" />
+    <Label value="Lumpy" background="#f08a4b" />
+    <Label value="Foot-and-mouth" background="#d94c4c" />
+  </RectangleLabels>
+  <PolygonLabels name="disease" toName="image" strokeWidth="3">
+    <Label value="Lumpy" background="#f08a4b" />
+    <Label value="Foot-and-mouth" background="#d94c4c" />
+  </PolygonLabels>
+</View>
